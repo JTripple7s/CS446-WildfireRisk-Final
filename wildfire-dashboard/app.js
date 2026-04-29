@@ -41,16 +41,15 @@ async function initMap() {
 }
 
 async function fetchActiveFires() {
-  statusDiv.textContent = "Fetching active fires from CAL FIRE...";
+  statusDiv.textContent = "Fetching active fires...";
   try {
-    // Using AllOrigins proxy to bypass CORS
-    const url = `https://api.allorigins.win/get?url=${encodeURIComponent(CALFIRE_API)}`;
+    // Fetch from our own API proxy instead of third-party CORS proxies
+    const url = `${API_BASE}/calfire`;
     
     const response = await fetch(url);
-    if (!response.ok) throw new Error("Proxy unavailable");
+    if (!response.ok) throw new Error("Internal Proxy unavailable");
     
-    const wrapper = await response.json();
-    const fires = JSON.parse(wrapper.contents);
+    const fires = await response.json();
     
     clearMarkers(activeFireMarkers);
     const bounds = new google.maps.LatLngBounds();

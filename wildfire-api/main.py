@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from google.cloud import bigquery
 import os
+import requests
 
 app = FastAPI(title="Wildfire Risk API")
 
@@ -23,6 +24,17 @@ client = bigquery.Client()
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/calfire")
+def get_calfire_data():
+    url = "https://www.fire.ca.gov/umbraco/api/IncidentApi/List?inactive=false"
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch CAL FIRE data: {str(e)}")
 
 
 @app.get("/predictions")
