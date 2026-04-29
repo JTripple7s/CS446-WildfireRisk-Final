@@ -6,131 +6,76 @@
     <title>Wildfire Risk Dashboard</title>
     <link rel="stylesheet" href="styles.css" />
 
-<script>
-    (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({
-      key: "AIzaSyCz7MvCvQsSNjBMNLYSvmPwgkBypl_F7J4",
-      v: "weekly",
-    });
-  </script>
-
-  </head>
-  <body>
-    <div class="container">
-      <h1>Wildfire Risk Dashboard</h1>
-      <div id="version">Deployed: v1</div>
-
-
-      <p>
-        Live data from the Cloud Run API for the wildfire prediction platform.
-      </p>
-
-      <div class="controls">
-        <button id="loadBtn">Load Predictions</button>
-      </div>
-
-      <div id="status">Click "Load Predictions" to fetch data.</div>
-
-      <table id="predictionsTable">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Grid ID</th>
-            <th>Risk Score</th>
-            <th>Risk Level</th>
-            <th>Latitude</th>
-            <th>Longitude</th>
-            <th>Model</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-  </div>
-<div id="map"></div>
-  <script src="app.js"></script>
-  </body>
-</html>
-
-
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Locator</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <style>
-      html,
-      body {
-        height: 100%;
-        margin: 0;
-      }
-
-      gmpx-store-locator {
-        width: 100%;
-        height: 100%;
-
-        --gmpx-color-surface: #fff;
-        --gmpx-color-on-surface: #212121;
-        --gmpx-color-on-surface-variant: #757575;
-        --gmpx-color-primary: #1967d2;
-        --gmpx-color-outline: #e0e0e0;
-        --gmpx-fixed-panel-width-row-layout: 28.5em;
-        --gmpx-fixed-panel-height-column-layout: 65%;
-        --gmpx-font-family-base: "Roboto", sans-serif;
-        --gmpx-font-family-headings: "Roboto", sans-serif;
-        --gmpx-font-size-base: 0.875rem;
-        --gmpx-hours-color-open: #188038;
-        --gmpx-hours-color-closed: #d50000;
-        --gmpx-rating-color: #ffb300;
-        --gmpx-rating-color-empty: #e0e0e0;
-      }
-    </style>
     <script>
-      const CONFIGURATION = {
-        "locations": [
-          {"title":"Death Valley National Park","address1":"California","address2":"United States","coords":{"lat":36.4617,"lng":-116.8668},"placeId":"ChIJR4qudndLx4ARVLDye3zwycw","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Yosemite National Park","address1":"California","address2":"USA","coords":{"lat":37.7487,"lng":-119.5873},"placeId":"ChIJxeyK9Z3wloAR_gOA7SycJC0","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Joshua Tree National Park","address1":"California","address2":"USA","coords":{"lat":33.9157,"lng":-115.8807},"placeId":"ChIJe6hluYWP2oAR4p3rOqftdxk","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Lassen Volcanic National Park","address1":"California","address2":"USA","coords":{"lat":40.4377,"lng":-121.5338},"placeId":"ChIJvzhBwQdWnYARQmdmeqfYNI8","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Sequoia National Park","address1":"California","address2":"USA","coords":{"lat":36.491,"lng":-118.8253},"placeId":"ChIJeWUZLX37v4ARZPQen_nfCkQ","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Pinnacles National Park","address1":"California","address2":"USA","coords":{"lat":36.4938,"lng":-121.1465},"placeId":"ChIJn93OiYBDkoAR7kSomO77gps","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Redwood National and State Parks","address1":"California","address2":"USA","coords":{"lat":41.3025,"lng":-124.0471},"placeId":"ChIJpX9B9TZm0FQRjl87lWYyzzY","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Kings Canyon National Park","address1":"California","address2":"USA","coords":{"lat":36.74,"lng":-118.9633},"placeId":"ChIJe6fxX-7Vv4ARTA9DcLeDZII","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Acadia National Park","address1":"Maine","address2":"USA","coords":{"lat":44.4091,"lng":-68.2473},"placeId":"ChIJJSmiDrKjrkwRhFVV_A4i32I","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Arches National Park","address1":"Utah","address2":"USA","coords":{"lat":38.6164,"lng":-109.6202},"placeId":"ChIJUaoNhhr2yoARlcQo0WnqQk8","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Badlands National Park","address1":"South Dakota","address2":"USA","coords":{"lat":43.7491,"lng":-101.9421},"placeId":"ChIJIyAFGAyHfocR8Hfm2jFeaGk","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Bryce Canyon National Park","address1":"Utah","address2":"USA","coords":{"lat":37.6404,"lng":-112.1696},"placeId":"ChIJLevDAsZrNYcRBm2svvvY6Ws","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Everglades National Park","address1":"Florida","address2":"USA","coords":{"lat":25.3952,"lng":-80.5831},"placeId":"ChIJ2wVsejCo0IgRlzEvdlY-4A8","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Gateway Arch National Park","address1":"Missouri","address2":"USA","coords":{"lat":38.627,"lng":-90.1855},"placeId":"ChIJtbwVbuKy2IcR8dRuQlc8OPg","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Glacier National Park","address1":"Montana","address2":"USA","coords":{"lat":48.6953,"lng":-113.718},"placeId":"ChIJVVVVVRWQaFMR7F3FFSK8Fq8","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Grand Canyon National Park","address1":"Arizona","address2":"USA","coords":{"lat":36.0591,"lng":-112.1093},"placeId":"ChIJFU2bda4SM4cRKSCRyb6pOB8","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Great Smoky Mountains National Park","address1":"Tennessee","address2":"USA","coords":{"lat":35.6856,"lng":-83.5364},"placeId":"ChIJFRj7iGuYXogRYSR1p8Fvkjw","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Mammoth Cave National Park","address1":"Kentucky","address2":"USA","coords":{"lat":37.1871,"lng":-86.1012},"placeId":"ChIJV3vJlE0CZogRwKOAYKCziB8","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Mesa Verde National Park","address1":"Colorado","address2":"USA","coords":{"lat":37.3359,"lng":-108.4082},"placeId":"ChIJH3HXLr9gOYcRYxj2G6KV9nk","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Mount Rainier National Park","address1":"Washington","address2":"USA","coords":{"lat":46.7859,"lng":-121.7365},"placeId":"ChIJh0vJ7ubNkFQRGKSRT_uh9Fw","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Olympic National Park","address1":"Washington","address2":"USA","coords":{"lat":48.0993,"lng":-123.4256},"placeId":"ChIJ0XIEzwmAjlQRUXl9squHIAA","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Rocky Mountain National Park","address1":"Colorado","address2":"USA","coords":{"lat":40.441,"lng":-105.7545},"placeId":"ChIJ6QNZReR5aYcRF4KOp0PuJ_o","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Shenandoah National Park","address1":"Virginia","address2":"USA","coords":{"lat":38.5178,"lng":-78.4368},"placeId":"ChIJESb8ihdhtIkRMYiMZWR5F-Y","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Yellowstone National Park","address1":"Wyoming","address2":"USA","coords":{"lat":44.4586,"lng":-110.8292},"placeId":"ChIJVVVVVVXlUVMRu-GPNDD5qKw","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]},
-          {"title":"Zion National Park","address1":"Utah","address2":"USA","coords":{"lat":37.1999,"lng":-112.9878},"placeId":"ChIJ2fhEiNDqyoAR9VY2qhU6Lnw","actions":[{"label":"Book appointment","defaultUrl":"https://www.gstatic.com/pantheon/images/maps/reserve_with_google_preview_v1.png"}]}
-        ],
-        "mapOptions": {"center":{"lat":38.0,"lng":-100.0},"fullscreenControl":true,"mapTypeControl":false,"streetViewControl":false,"zoom":4,"zoomControl":true,"maxZoom":17,"mapId":""},
-        "mapsApiKey": "YOUR_API_KEY_HERE",
-        "capabilities": {"input":true,"autocomplete":true,"directions":true,"distanceMatrix":true,"details":true,"actions":true}
-      };
-
-    </script>
-    <script type="module">
-      document.addEventListener('DOMContentLoaded', async () => {
-        await customElements.whenDefined('gmpx-store-locator');
-        const locator = document.querySelector('gmpx-store-locator');
-        locator.configureFromQuickBuilder(CONFIGURATION);
+      (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({
+        key: "AIzaSyCz7MvCvQsSNjBMNLYSvmPwgkBypl_F7J4",
+        v: "weekly",
       });
     </script>
   </head>
   <body>
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/@googlemaps/extended-component-library/0.6.11/index.min.js"></script>
+    <header>
+      <h1>Wildfire Risk Dashboard</h1>
+      <div id="version">Deployed: v2 (Interactive)</div>
+    </header>
 
-    <gmpx-api-loader key="YOUR_API_KEY_HERE" solution-channel="GMP_QB_locatorplus_v11_cABCDEF"></gmpx-api-loader>
-    <gmpx-store-locator map-id="DEMO_MAP_ID"></gmpx-store-locator>
+    <div class="dashboard-container">
+      <aside class="sidebar">
+        <section class="controls">
+          <h3>Controls</h3>
+          <button id="loadBtn">Fetch AI Predictions</button>
+          
+          <div class="filter-group">
+            <label><strong>Data Layers:</strong></label>
+            <div class="checkbox-item">
+              <input type="checkbox" id="toggleActiveFires" checked />
+              <label for="toggleActiveFires">Real Active Fires (CAL FIRE)</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="checkbox" id="togglePredictions" checked />
+              <label for="togglePredictions">AI Risk Predictions</label>
+            </div>
+          </div>
+
+          <div class="filter-group" id="riskFilters">
+            <label><strong>Risk Level Filter:</strong></label>
+            <div class="checkbox-item">
+              <input type="checkbox" id="filterHigh" value="HIGH" checked />
+              <label for="filterHigh" class="high-label">High Risk</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="checkbox" id="filterMedium" value="MEDIUM" checked />
+              <label for="filterMedium" class="medium-label">Medium Risk</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="checkbox" id="filterLow" value="LOW" checked />
+              <label for="filterLow" class="low-label">Low Risk</label>
+            </div>
+          </div>
+        </section>
+
+        <section class="data-view">
+          <div id="status">Active fires loaded from CAL FIRE.</div>
+          <div class="table-wrapper">
+            <table id="predictionsTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Risk</th>
+                  <th>Location</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+      </aside>
+
+      <main class="map-area">
+        <div id="map"></div>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
   </body>
 </html>
