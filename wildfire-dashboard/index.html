@@ -5,34 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Wildfire Risk Dashboard</title>
     <link rel="stylesheet" href="styles.css" />
+
+    <script>
+      (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({
+        key: "AIzaSyCz7MvCvQsSNjBMNLYSvmPwgkBypl_F7J4",
+        v: "weekly",
+      });
+    </script>
   </head>
   <body>
-    <div class="container">
+    <header>
       <h1>Wildfire Risk Dashboard</h1>
-      <p>
-        Live data from the Cloud Run API for the wildfire prediction platform.
-      </p>
+      <div id="version">Deployed: v2 (Interactive)</div>
+    </header>
 
-      <div class="controls">
-        <button id="loadBtn">Load Predictions</button>
-      </div>
+    <div class="dashboard-container">
+      <aside class="sidebar">
+        <section class="controls">
+          <h3>Controls</h3>
+          <button id="loadBtn">Fetch AI Predictions</button>
+          
+          <div class="filter-group">
+            <label><strong>Data Layers:</strong></label>
+            <div class="checkbox-item">
+              <input type="checkbox" id="toggleActiveFires" checked />
+              <label for="toggleActiveFires">Real Active Fires (CAL FIRE)</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="checkbox" id="togglePredictions" checked />
+              <label for="togglePredictions">AI Risk Predictions</label>
+            </div>
+          </div>
 
-      <div id="status">Click "Load Predictions" to fetch data.</div>
+          <div class="filter-group" id="riskFilters">
+            <label><strong>Risk Level Filter:</strong></label>
+            <div class="checkbox-item">
+              <input type="checkbox" id="filterHigh" value="HIGH" checked />
+              <label for="filterHigh" class="high-label">High Risk</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="checkbox" id="filterMedium" value="MEDIUM" checked />
+              <label for="filterMedium" class="medium-label">Medium Risk</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="checkbox" id="filterLow" value="LOW" checked />
+              <label for="filterLow" class="low-label">Low Risk</label>
+            </div>
+          </div>
+        </section>
 
-      <table id="predictionsTable">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Grid ID</th>
-            <th>Risk Score</th>
-            <th>Risk Level</th>
-            <th>Latitude</th>
-            <th>Longitude</th>
-            <th>Model</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+        <section class="data-view">
+          <div id="status">Active fires loaded from CAL FIRE.</div>
+          <div class="table-wrapper">
+            <table id="predictionsTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Risk</th>
+                  <th>Location</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+      </aside>
+
+      <main class="map-area">
+        <div id="map"></div>
+      </main>
     </div>
 
     <script src="app.js"></script>
