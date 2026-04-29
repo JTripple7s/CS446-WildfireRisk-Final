@@ -7,7 +7,6 @@ let allPredictions = [];
 const API_BASE = "https://wildfire-api-808815635798.us-west1.run.app";
 const CALFIRE_API = "https://www.fire.ca.gov/umbraco/api/IncidentApi/List?inactive=false";
 
-// Elements
 const loadBtn = document.getElementById("loadBtn");
 const statusDiv = document.getElementById("status");
 const tableBody = document.querySelector("#predictionsTable tbody");
@@ -29,7 +28,6 @@ async function initMap() {
       mapId: "DEMO_MAP_ID", 
     });
 
-    // Attach marker classes to window for easier access in other functions
     window.AdvancedMarkerElement = AdvancedMarkerElement;
     window.PinElement = PinElement;
 
@@ -45,7 +43,6 @@ async function initMap() {
 async function fetchActiveFires() {
   statusDiv.textContent = "Fetching active fires from CAL FIRE...";
   try {
-    // CAL FIRE doesn't allow CORS from localhost. Use a proxy for local dev if needed.
     const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
     const url = isLocal ? `https://corsproxy.io/?${encodeURIComponent(CALFIRE_API)}` : CALFIRE_API;
     
@@ -199,7 +196,6 @@ loadBtn.addEventListener("click", fetchPredictions);
 
 [toggleActiveFires, togglePredictions, filterHigh, filterMedium, filterLow].forEach(el => {
   el.addEventListener("change", () => {
-    // Update marker visibility
     activeFireMarkers.forEach(m => m.setMap(toggleActiveFires.checked ? map : null));
     predictionMarkers.forEach(m => m.setMap(togglePredictions.checked ? map : null));
     
@@ -208,5 +204,4 @@ loadBtn.addEventListener("click", fetchPredictions);
   });
 });
 
-// Start
 initMap();
