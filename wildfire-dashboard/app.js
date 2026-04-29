@@ -43,8 +43,7 @@ async function initMap() {
 async function fetchActiveFires() {
   statusDiv.textContent = "Fetching active fires from CAL FIRE...";
   try {
-    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-    const url = isLocal ? `https://corsproxy.io/?${encodeURIComponent(CALFIRE_API)}` : CALFIRE_API;
+    const url = `https://corsproxy.io/?${encodeURIComponent(CALFIRE_API)}`;
     
     const response = await fetch(url);
     if (!response.ok) throw new Error("CAL FIRE API unavailable");
