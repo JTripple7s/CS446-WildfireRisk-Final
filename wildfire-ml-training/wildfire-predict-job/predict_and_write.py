@@ -11,7 +11,7 @@ PROJECT = os.environ.get("PROJECT", "wildfirecs446")
 LOCATION = os.environ.get("LOCATION", "us-west2")
 ENDPOINT_ID = os.environ.get("ENDPOINT_ID", "100963754732158976")
 BQ_DATASET = os.environ.get("BQ_DATASET", "wildfire_mvp")
-BQ_TABLE = os.environ.get("BQ_TABLE", "predictions_ml")
+BQ_TABLE = os.environ.get("BQ_TABLE", "predictions")
 
 logging.basicConfig(level=logging.INFO)
 
@@ -64,7 +64,7 @@ def main():
         df["risk_level"] = df["risk_score"].apply(get_risk_level)
 
         # 6. Align with BigQuery schema
-        df["prediction_date"] = pd.Timestamp.utcnow().date().isoformat()
+        df["prediction_date"] = pd.to_datetime(pd.Timestamp.utcnow().date())
         df["model_version"] = "wildfire-vertex-xgb-v1"
 
         out_df = df[[
