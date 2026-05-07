@@ -9,7 +9,7 @@ from google.cloud import aiplatform
 # Config
 PROJECT = os.environ.get("PROJECT", "wildfirecs446")
 LOCATION = os.environ.get("LOCATION", "us-west2")
-ENDPOINT_ID = os.environ.get("ENDPOINT_ID", "8097762950837698560")
+ENDPOINT_ID = os.environ.get("ENDPOINT_ID", "100963754732158976")
 BQ_DATASET = os.environ.get("BQ_DATASET", "wildfire_mvp")
 BQ_TABLE = os.environ.get("BQ_TABLE", "predictions_ml")
 
