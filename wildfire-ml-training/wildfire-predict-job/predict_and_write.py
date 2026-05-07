@@ -10,7 +10,7 @@ from google.cloud import aiplatform
 # Config
 PROJECT = os.environ.get("PROJECT", "wildfirecs446")
 LOCATION = os.environ.get("LOCATION", "us-central1")
-ENDPOINT_ID = os.environ.get("ENDPOINT_ID", "8097762950837698560")
+ENDPOINT_ID = os.environ.get("ENDPOINT_ID", "100963754732158976")
 BQ_DATASET = os.environ.get("BQ_DATASET", "wildfire_mvp")
 BQ_TABLE = os.environ.get("BQ_TABLE", "predictions_ml")
 
@@ -23,78 +23,67 @@ def predict_json(instances):
     response = endpoint.predict(instances=instances)
     return response.predictions
 
+def get_risk_level(score):
+    if score > 0.7: return "HIGH"
+    if score > 0.3: return "MEDIUM"
+    return "LOW"
+
 def main():
     try:
         bq = bigquery.Client(project=PROJECT)
 
         # 1. Read minimal columns from grid table
-        df = bq.query("""
+        df = bq.query(f"""
             SELECT grid_id, center_lat, center_lon
-            FROM `wildfirecs446.wildfire_mvp.grid_cells`
+            FROM `{PROJECT}.{BQ_DATASET}.grid_cells`
         """).to_dataframe()
 
         if df.empty:
             logging.info("No grid cells found; exiting.")
             return
 
-        # 2. Add placeholder features (or compute real ones)
-        df["temp_c"] = 25.0
-        df["humidity"] = 40.0
-        df["wind_speed_kmh"] = 10.0
-        df["wind_dir_deg"] = 180.0
-        df["vegetation_index"] = 0.5
-        df["slope_deg"] = 5.0
-        df["elevation_m"] = 300.0
+        # 2. Add features (placeholder or simulated)
+        df["temp_c"] = 28.5
+        df["humidity"] = 35.0
+        df["wind_speed_kmh"] = 15.0
+        df["wind_dir_deg"] = 210.0
+        df["vegetation_index"] = 0.6
+        df["slope_deg"] = 8.0
+        df["elevation_m"] = 450.0
 
-        # 3. Build instances as list-of-lists (2D)
-        feature_columns = [
-            "center_lat",
-            "center_lon",
-            "temp_c",
-            "humidity",
-            "wind_speed_kmh",
-            "wind_dir_deg",
-            "vegetation_index",
-            "slope_deg",
-            "elevation_m"
-        ]
+        # 3. Build instances
+        feature_columns = ["center_lat", "center_lon", "temp_c", "humidity", "wind_speed_kmh", "wind_dir_deg", "vegetation_index", "slope_deg", "elevation_m"]
         instances = df[feature_columns].values.tolist()
 
         # 4. Call Vertex AI
+        logging.info("Calling Vertex AI endpoint %s...", ENDPOINT_ID)
         preds = predict_json(instances)
 
-        # 5. Normalize predictions to a flat list of floats
-        # handle cases where preds is list of lists or list of scalars
-        flat_preds = []
-        for p in preds:
-            if isinstance(p, (list, tuple)):
-                # take first element if nested
-                flat_preds.append(float(p[0]))
-            else:
-                flat_preds.append(float(p))
-
-        if len(flat_preds) != len(df):
-            raise RuntimeError(f"Prediction length {len(flat_preds)} != input rows {len(df)}")
-
+        # 5. Process predictions
+        flat_preds = [float(p[0]) if isinstance(p, (list, tuple)) else float(p) for p in preds]
         df["risk_score"] = flat_preds
+        df["risk_level"] = df["risk_score"].apply(get_risk_level)
 
-        # 6. Select only columns that match your BigQuery table schema
+        # 6. Align with BigQuery schema
+        df["prediction_date"] = pd.Timestamp.utcnow().date().isoformat()
+        df["model_version"] = "wildfire-vertex-xgb-v1"
+
         out_df = df[[
+            "prediction_date",
             "grid_id",
+            "risk_score",
+            "risk_level",
             "center_lat",
             "center_lon",
-            "risk_score"
-        ]].copy()
+            "model_version"
+        ]]
 
-        # Add optional metadata columns if your table expects them
-        out_df["prediction_date"] = pd.Timestamp.utcnow().date().isoformat()
-        out_df["model_version"] = "wildfire-risk-xgb-v2-cpu"
-
-        # 7. Write to BigQuery (append)
+        # 7. Write to BigQuery
         table_id = f"{PROJECT}.{BQ_DATASET}.{BQ_TABLE}"
-        job = bq.load_table_from_dataframe(out_df, table_id)
-        job.result()  # wait
-        logging.info("Wrote %d rows to %s", len(out_df), table_id)
+        job_config = bigquery.LoadJobConfig(write_disposition="WRITE_APPEND")
+        job = bq.load_table_from_dataframe(out_df, table_id, job_config=job_config)
+        job.result()
+        logging.info("Success! Wrote %d rows to %s", len(out_df), table_id)
 
     except Exception as e:
         logging.exception("Job failed: %s", e)
