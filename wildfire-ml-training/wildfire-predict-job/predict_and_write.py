@@ -2,7 +2,6 @@
 import os
 import json
 import logging
-from joblib import load
 import pandas as pd
 from google.cloud import bigquery
 from google.cloud import aiplatform
