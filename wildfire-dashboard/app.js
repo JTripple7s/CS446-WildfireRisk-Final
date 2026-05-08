@@ -126,7 +126,7 @@ function renderData() {
   const filtered = allPredictions.filter(p => selectedRisks.includes(p.risk_level));
   const bounds = new google.maps.LatLngBounds();
   
-  // Also include active fires in bounds if they are visible
+  // Include active fires in bounds if they are visible
   if (toggleActiveFires.checked) {
     activeFireMarkers.forEach(m => bounds.extend(m.position));
   }
