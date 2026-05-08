@@ -31,7 +31,7 @@ def main():
     try:
         bq = bigquery.Client(project=PROJECT)
 
-        # 1. Read minimal columns from grid table
+        #Read minimal columns from grid table
         df = bq.query(f"""
             SELECT grid_id, center_lat, center_lon
             FROM `{PROJECT}.{BQ_DATASET}.grid_cells`
@@ -41,7 +41,7 @@ def main():
             logging.info("No grid cells found; exiting.")
             return
 
-        # 2. Add features (placeholder or simulated)
+        #Add features (simulated)
         df["temp_c"] = 28.5
         df["humidity"] = 35.0
         df["wind_speed_kmh"] = 15.0
@@ -50,20 +50,20 @@ def main():
         df["slope_deg"] = 8.0
         df["elevation_m"] = 450.0
 
-        # 3. Build instances
+        #Build instances
         feature_columns = ["center_lat", "center_lon", "temp_c", "humidity", "wind_speed_kmh", "wind_dir_deg", "vegetation_index", "slope_deg", "elevation_m"]
         instances = df[feature_columns].values.tolist()
 
-        # 4. Call Vertex AI
+        #Call Vertex AI
         logging.info("Calling Vertex AI endpoint %s...", ENDPOINT_ID)
         preds = predict_json(instances)
 
-        # 5. Process predictions
+        #Process predictions
         flat_preds = [float(p[0]) if isinstance(p, (list, tuple)) else float(p) for p in preds]
         df["risk_score"] = flat_preds
         df["risk_level"] = df["risk_score"].apply(get_risk_level)
 
-        # 6. Align with BigQuery schema
+        #Align with BigQuery schema
         df["prediction_date"] = pd.to_datetime(pd.Timestamp.utcnow().date())
         df["model_version"] = "wildfire-vertex-xgb-v1"
 
@@ -77,7 +77,7 @@ def main():
             "model_version"
         ]]
 
-        # 7. Write to BigQuery
+        #Write to BigQuery
         table_id = f"{PROJECT}.{BQ_DATASET}.{BQ_TABLE}"
         job_config = bigquery.LoadJobConfig(write_disposition="WRITE_APPEND")
         job = bq.load_table_from_dataframe(out_df, table_id, job_config=job_config)
