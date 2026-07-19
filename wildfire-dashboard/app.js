@@ -5,7 +5,7 @@ let allPredictions = [];
 
 const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
   ? "http://localhost:8000"
-  : "https://wildfire-api-808815635798.us-west1.run.app";
+  : "https://wildfire-api-653947415430.us-west1.run.app";
 const CALFIRE_API = "https://www.fire.ca.gov/umbraco/api/IncidentApi/List?inactive=false";
 
 const loadBtn = document.getElementById("loadBtn");
@@ -30,7 +30,7 @@ function initMap() {
     }).addTo(map);
 
     console.log("Leaflet dark map initialized.");
-    
+
     // Load active fires immediately
     fetchActiveFires();
   } catch (error) {
@@ -44,9 +44,9 @@ async function fetchActiveFires() {
     const url = `${API_BASE}/calfire`;
     const response = await fetch(url);
     if (!response.ok) throw new Error("Internal Proxy unavailable");
-    
+
     const fires = await response.json();
-    
+
     clearMarkers(activeFireMarkers);
     const bounds = L.latLngBounds();
 
@@ -65,9 +65,9 @@ async function fetchActiveFires() {
 
         const fireUrl = fire.Url && fire.Url.startsWith("http") ? fire.Url : `https://www.fire.ca.gov${fire.Url || ''}`;
 
-        const marker = L.marker([lat, lng], { 
+        const marker = L.marker([lat, lng], {
           icon: fireIcon,
-          title: fire.Name 
+          title: fire.Name
         });
 
         marker.bindPopup(`
@@ -108,7 +108,7 @@ async function fetchPredictions() {
 
     const data = await response.json();
     allPredictions = data.items;
-    
+
     renderData();
   } catch (error) {
     statusDiv.textContent = `Error: ${error.message}`;
@@ -118,7 +118,7 @@ async function fetchPredictions() {
 function renderData() {
   clearMarkers(predictionMarkers);
   tableBody.innerHTML = "";
-  
+
   const selectedRisks = [];
   if (filterHigh.checked) selectedRisks.push("HIGH");
   if (filterMedium.checked) selectedRisks.push("MEDIUM");
@@ -126,7 +126,7 @@ function renderData() {
 
   const filtered = allPredictions.filter(p => selectedRisks.includes(p.risk_level));
   const bounds = L.latLngBounds();
-  
+
   let boundsExtended = false;
 
   // Include active fires in bounds if they are visible
@@ -191,7 +191,12 @@ function renderData() {
 
   if (boundsExtended) {
     map.fitBounds(bounds, { padding: [30, 30] });
-    if (filtered.length > 0) statusDiv.textContent = `Displaying ${filtered.length} predictions.`;
+  }
+
+  if (filtered.length > 0) {
+    statusDiv.textContent = `Displaying ${filtered.length} predictions.`;
+  } else {
+    statusDiv.textContent = `No predictions found matching filters (loaded ${allPredictions.length} total).`;
   }
 }
 
@@ -228,7 +233,7 @@ loadBtn.addEventListener("click", fetchPredictions);
         map.removeLayer(m);
       }
     });
-    
+
     // Re-render to update filters
     renderData();
   });

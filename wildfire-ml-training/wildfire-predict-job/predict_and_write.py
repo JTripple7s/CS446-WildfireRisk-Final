@@ -6,7 +6,7 @@ import pandas as pd
 import sqlite3
 
 # Config
-PROJECT = os.environ.get("PROJECT", "wildfirecs446")
+PROJECT = os.environ.get("PROJECT", os.environ.get("PROJECT_ID", "wildfirecs446"))
 LOCATION = os.environ.get("LOCATION", "us-west2")
 ENDPOINT_ID = os.environ.get("ENDPOINT_ID", "100963754732158976")
 BQ_DATASET = os.environ.get("BQ_DATASET", "wildfire_mvp")
