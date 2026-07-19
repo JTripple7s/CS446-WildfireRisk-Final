@@ -2,7 +2,7 @@
 
 A cloud-native, geospatial interface designed to monitor real-time active fire events and predict regional wildfire risk using machine learning.
 
-This project is built with a **Dual-Mode Adapter Architecture**, enabling it to run either as a fully serverless system on **Google Cloud Platform (GCP)** or as a **fully offline, containerized local system**—making it highly portable for development, demonstrations, and interviews.
+This project is built with a **Dual-Mode Adapter Architecture**, enabling it to run either as a fully serverless system on **Google Cloud Platform (GCP)** or as a **fully offline, containerized local system**—making it highly portable for development.
 
 ---
 
@@ -122,13 +122,3 @@ gcloud run deploy wildfire-dashboard \
   --allow-unauthenticated
 ```
 
----
-
-## 📈 Resume Highlights & Talking Points
-
-If you are showcasing this project on your resume or discussing it in system design interviews, here are the key highlights to mention:
-
-* **Dual-Mode Portability**: *"Designed and built a hybrid architecture that dynamically switches between serverless cloud storage (BigQuery) and local fallbacks (SQLite) based on environment configurations, allowing 100% offline local development."*
-* **Cloud Cost Optimization**: *"Optimized the GCP architecture to run completely within the free tier ($0/month) by replacing an expensive Vertex AI online prediction endpoint ($70+/month) with containerized local joblib inference on Cloud Run, reducing hosting overhead to zero."*
-* **Serverless Engineering**: *"Leveraged Docker containerization, Google Cloud Run, Nginx, and Google Maps APIs to deploy a scalable, serverless geospatial application capable of handling high concurrent reads under zero-scale idle costs."*
-* **Batch Processing**: *"Implemented a clean Python batch job utilizing pandas, sqlite3/bigquery clients, and XGBoost, decoupled from the main API, following the microservices architecture pattern."*
