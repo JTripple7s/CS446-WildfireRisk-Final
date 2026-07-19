@@ -1,10 +1,11 @@
 let map;
-let infoWindow;
 let activeFireMarkers = [];
 let predictionMarkers = [];
 let allPredictions = [];
 
-const API_BASE = "https://wildfire-api-808815635798.us-west1.run.app";
+const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+  ? "http://localhost:8000"
+  : "https://wildfire-api-653947415430.us-west1.run.app";
 const CALFIRE_API = "https://www.fire.ca.gov/umbraco/api/IncidentApi/List?inactive=false";
 
 const loadBtn = document.getElementById("loadBtn");
@@ -16,23 +17,20 @@ const filterHigh = document.getElementById("filterHigh");
 const filterMedium = document.getElementById("filterMedium");
 const filterLow = document.getElementById("filterLow");
 
-async function initMap() {
+function initMap() {
   try {
-    const { Map } = await google.maps.importLibrary("maps");
-    const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
-    infoWindow = new google.maps.InfoWindow();
+    // Initialize Leaflet map targeting the 'map' div
+    map = L.map('map').setView([37.5, -120.5], 6);
 
-    map = new Map(document.getElementById("map"), {
-      center: { lat: 37.5, lng: -120.5 },
-      zoom: 6,
-      mapId: "DEMO_MAP_ID", 
-    });
+    // Add dark themed map tiles to match our premium aesthetic
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 20
+    }).addTo(map);
 
-    window.AdvancedMarkerElement = AdvancedMarkerElement;
-    window.PinElement = PinElement;
+    console.log("Leaflet dark map initialized.");
 
-    console.log("Map initialized.");
-    
     // Load active fires immediately
     fetchActiveFires();
   } catch (error) {
@@ -43,49 +41,52 @@ async function initMap() {
 async function fetchActiveFires() {
   statusDiv.textContent = "Fetching active fires...";
   try {
-    // Fetch from our own API proxy instead of third-party CORS proxies
     const url = `${API_BASE}/calfire`;
-    
     const response = await fetch(url);
     if (!response.ok) throw new Error("Internal Proxy unavailable");
-    
+
     const fires = await response.json();
-    
+
     clearMarkers(activeFireMarkers);
-    const bounds = new google.maps.LatLngBounds();
+    const bounds = L.latLngBounds();
 
     fires.forEach(fire => {
       if (fire.Latitude && fire.Longitude) {
-        const firePin = new window.PinElement({
-          glyphText: "🔥",
-          background: "#FF4500",
-          borderColor: "#8B0000",
+        // High-end glowing fire emoji icon
+        const fireIcon = L.divIcon({
+          html: `<div style="font-size: 20px; filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.6)); text-align: center;">🔥</div>`,
+          className: 'custom-fire-icon',
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
         });
 
-        const marker = new window.AdvancedMarkerElement({
-          position: { lat: parseFloat(fire.Latitude), lng: parseFloat(fire.Longitude) },
-          map: toggleActiveFires.checked ? map : null,
-          title: fire.Name,
-          content: firePin.element,
+        const lat = parseFloat(fire.Latitude);
+        const lng = parseFloat(fire.Longitude);
+
+        const fireUrl = fire.Url && fire.Url.startsWith("http") ? fire.Url : `https://www.fire.ca.gov${fire.Url || ''}`;
+
+        const marker = L.marker([lat, lng], {
+          icon: fireIcon,
+          title: fire.Name
         });
 
-        marker.addListener("click", () => {
-          const content = `
-            <div style="color: #333;">
-              <h3 style="margin: 0 0 5px;">${fire.Name}</h3>
-              <p><strong>Location:</strong> ${fire.Location}</p>
-              <p><strong>Acres:</strong> ${fire.AcresBurned || 'Unknown'}</p>
-              <p><strong>Contained:</strong> ${fire.PercentContained || 0}%</p>
-              <p><strong>Started:</strong> ${new Date(fire.Started).toLocaleDateString()}</p>
-              <a href="https://www.fire.ca.gov${fire.Url}" target="_blank">View on CAL FIRE</a>
-            </div>
-          `;
-          infoWindow.setContent(content);
-          infoWindow.open(map, marker);
-        });
+        marker.bindPopup(`
+          <div style="color: #1e293b; font-family: sans-serif; font-size: 13px; line-height: 1.4;">
+            <h3 style="margin: 0 0 6px 0; color: #e11d48; font-size: 14px; font-weight: 700;">${fire.Name}</h3>
+            <p style="margin: 2px 0;"><strong>Location:</strong> ${fire.Location}</p>
+            <p style="margin: 2px 0;"><strong>Acres:</strong> ${fire.AcresBurned || 'Unknown'}</p>
+            <p style="margin: 2px 0;"><strong>Contained:</strong> ${fire.PercentContained || 0}%</p>
+            <p style="margin: 2px 0;"><strong>Started:</strong> ${new Date(fire.Started).toLocaleDateString()}</p>
+            <a href="${fireUrl}" target="_blank" style="display: inline-block; margin-top: 6px; color: #0284c7; font-weight: 600; text-decoration: none;">View on CAL FIRE →</a>
+          </div>
+        `);
+
+        if (toggleActiveFires.checked) {
+          marker.addTo(map);
+        }
 
         activeFireMarkers.push(marker);
-        bounds.extend(marker.position);
+        bounds.extend([lat, lng]);
       }
     });
 
@@ -107,7 +108,7 @@ async function fetchPredictions() {
 
     const data = await response.json();
     allPredictions = data.items;
-    
+
     renderData();
   } catch (error) {
     statusDiv.textContent = `Error: ${error.message}`;
@@ -117,78 +118,96 @@ async function fetchPredictions() {
 function renderData() {
   clearMarkers(predictionMarkers);
   tableBody.innerHTML = "";
-  
+
   const selectedRisks = [];
   if (filterHigh.checked) selectedRisks.push("HIGH");
   if (filterMedium.checked) selectedRisks.push("MEDIUM");
   if (filterLow.checked) selectedRisks.push("LOW");
 
   const filtered = allPredictions.filter(p => selectedRisks.includes(p.risk_level));
-  const bounds = new google.maps.LatLngBounds();
-  
+  const bounds = L.latLngBounds();
+
+  let boundsExtended = false;
+
   // Include active fires in bounds if they are visible
   if (toggleActiveFires.checked) {
-    activeFireMarkers.forEach(m => bounds.extend(m.position));
+    activeFireMarkers.forEach(m => {
+      bounds.extend(m.getLatLng());
+      boundsExtended = true;
+    });
   }
 
   filtered.forEach(item => {
+    const lat = parseFloat(item.center_lat);
+    const lon = parseFloat(item.center_lon);
+
     // Table Row
     const row = document.createElement("tr");
     const riskClass = item.risk_level.toLowerCase();
     row.className = `${riskClass}-row`;
     row.innerHTML = `
       <td>${item.prediction_date}</td>
-      <td class="${riskClass}-label">${item.risk_level}</td>
-      <td>${parseFloat(item.center_lat).toFixed(2)}, ${parseFloat(item.center_lon).toFixed(2)}</td>
+      <td><span class="${riskClass}-label">${item.risk_level}</span></td>
+      <td>${lat.toFixed(2)}, ${lon.toFixed(2)}</td>
     `;
     tableBody.appendChild(row);
 
-    // Marker
-    const pin = new window.PinElement({
-      background: getRiskColor(item.risk_level),
-      borderColor: "#333",
-      glyphColor: "white",
+    // Custom Glowing Dot Marker for predictions
+    const color = getRiskColor(item.risk_level);
+    const riskIcon = L.divIcon({
+      html: `<div style="
+        width: 12px; 
+        height: 12px; 
+        background-color: ${color}; 
+        border: 2px solid #fff; 
+        border-radius: 50%; 
+        box-shadow: 0 0 8px ${color};
+      "></div>`,
+      className: 'custom-prediction-icon',
+      iconSize: [16, 16],
+      iconAnchor: [8, 8]
     });
 
-    const marker = new window.AdvancedMarkerElement({
-      position: { lat: parseFloat(item.center_lat), lng: parseFloat(item.center_lon) },
-      map: togglePredictions.checked ? map : null,
-      title: `Risk: ${item.risk_level}`,
-      content: pin.element,
-    });
+    const marker = L.marker([lat, lon], { icon: riskIcon });
 
-    marker.addListener("click", () => {
-      const content = `
-        <div style="color: #333;">
-          <h3 style="margin: 0 0 5px;">AI Prediction</h3>
-          <p><strong>Risk Level:</strong> <span class="${riskClass}-label">${item.risk_level}</span></p>
-          <p><strong>Risk Score:</strong> ${item.risk_score}</p>
-          <p><strong>Grid ID:</strong> ${item.grid_id}</p>
-          <p><strong>Date:</strong> ${item.prediction_date}</p>
-        </div>
-      `;
-      infoWindow.setContent(content);
-      infoWindow.open(map, marker);
-    });
+    marker.bindPopup(`
+      <div style="color: #1e293b; font-family: sans-serif; font-size: 13px; line-height: 1.4;">
+        <h3 style="margin: 0 0 6px 0; color: #0f172a; font-size: 14px; font-weight: 700;">AI Wildfire Risk Prediction</h3>
+        <p style="margin: 2px 0;"><strong>Risk Level:</strong> <span style="color: ${color}; font-weight: 700;">${item.risk_level}</span></p>
+        <p style="margin: 2px 0;"><strong>Risk Score:</strong> ${(item.risk_score * 100).toFixed(1)}%</p>
+        <p style="margin: 2px 0;"><strong>Grid ID:</strong> ${item.grid_id}</p>
+        <p style="margin: 2px 0;"><strong>Date:</strong> ${item.prediction_date}</p>
+      </div>
+    `);
+
+    if (togglePredictions.checked) {
+      marker.addTo(map);
+    }
 
     predictionMarkers.push(marker);
-    bounds.extend(marker.position);
+    bounds.extend([lat, lon]);
+    boundsExtended = true;
   });
 
-  if (filtered.length > 0 || (toggleActiveFires.checked && activeFireMarkers.length > 0)) {
-    map.fitBounds(bounds);
-    if (filtered.length > 0) statusDiv.textContent = `Displaying ${filtered.length} predictions.`;
+  if (boundsExtended) {
+    map.fitBounds(bounds, { padding: [30, 30] });
+  }
+
+  if (filtered.length > 0) {
+    statusDiv.textContent = `Displaying ${filtered.length} predictions.`;
+  } else {
+    statusDiv.textContent = `No predictions found matching filters (loaded ${allPredictions.length} total).`;
   }
 }
 
 function getRiskColor(level) {
-  if (level === "HIGH") return "#b00020";
-  if (level === "MEDIUM") return "#d97706";
-  return "#15803d";
+  if (level === "HIGH") return "#ef4444";
+  if (level === "MEDIUM") return "#f59e0b";
+  return "#10b981";
 }
 
 function clearMarkers(markerArray) {
-  markerArray.forEach(m => m.setMap(null));
+  markerArray.forEach(m => map.removeLayer(m));
   markerArray.length = 0;
 }
 
@@ -197,10 +216,25 @@ loadBtn.addEventListener("click", fetchPredictions);
 
 [toggleActiveFires, togglePredictions, filterHigh, filterMedium, filterLow].forEach(el => {
   el.addEventListener("change", () => {
-    activeFireMarkers.forEach(m => m.setMap(toggleActiveFires.checked ? map : null));
-    predictionMarkers.forEach(m => m.setMap(togglePredictions.checked ? map : null));
-    
-    // Re-render everything to apply risk filters correctly
+    // Show/hide active fires
+    activeFireMarkers.forEach(m => {
+      if (toggleActiveFires.checked) {
+        m.addTo(map);
+      } else {
+        map.removeLayer(m);
+      }
+    });
+
+    // Show/hide predictions
+    predictionMarkers.forEach(m => {
+      if (togglePredictions.checked) {
+        m.addTo(map);
+      } else {
+        map.removeLayer(m);
+      }
+    });
+
+    // Re-render to update filters
     renderData();
   });
 });

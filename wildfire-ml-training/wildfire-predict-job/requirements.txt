@@ -2,3 +2,6 @@ google-cloud-bigquery
 google-cloud-aiplatform
 pandas
 db-dtypes
+xgboost
+scikit-learn
+joblib
