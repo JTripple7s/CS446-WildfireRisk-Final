@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  wildfire-api:
+    build:
+      context: ./wildfire-api
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8080"
+    environment:
+      - DATABASE_TYPE=sqlite
+      - SQLITE_DB_PATH=/app/data/wildfire.db
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+  wildfire-dashboard:
+    build:
+      context: ./wildfire-dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - wildfire-api
+    restart: unless-stopped
+
+  wildfire-predict-job:
+    build:
+      context: ./wildfire-ml-training/wildfire-predict-job
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_TYPE=sqlite
+      - SQLITE_DB_PATH=/app/data/wildfire.db
+      - INFERENCE_TYPE=local
+      - MODEL_PATH=/app/model/model.joblib
+    volumes:
+      - ./data:/app/data
+      - ./wildfire-ml-training/model:/app/model
+    profiles:
+      - jobs
